@@ -12,6 +12,8 @@
 
 class PIN{};
 class TLM{};
+#define TR_NAME(_name) (std::string(name())+"_"+std::string(_name)).c_str()
+#define PIN_NAME(bname,_name_) (std::string(bname)+"_"+std::string(_name_)).c_str()
 
 class VideoConfig {
 public:
@@ -59,7 +61,6 @@ public:
 	template<class C> void operator()(C& c){
 		bind(c);
 	}
-
 };
 
 template<class CFG=VideoConfig,class L=PIN> class video_base_out:public VideoInterface<CFG>{
@@ -122,6 +123,14 @@ public:
 		}
 	}
 
+	void set_trace(sc_trace_file* tf){
+		sc_trace(tf,	base_type::valid, 		TR_NAME("valid"));
+		sc_trace(tf,	base_type::v_sync,		TR_NAME("v_sync"));
+		sc_trace(tf,	base_type::h_sync,		TR_NAME("h_sync"));
+		sc_trace(tf,	base_type::video_en,	TR_NAME("video_en"));
+		sc_trace(tf,	base_type::data,		TR_NAME("data"));
+	}
+
 	template<class C> void bind(C& c){
 		base_type::valid(c.valid);
 		base_type::v_sync(c.v_sync);
@@ -161,6 +170,14 @@ public:
 		base_type::valid = false;
 	}
 
+	void set_trace(sc_trace_file* tf){
+		sc_trace(tf,	base_type::valid, 		TR_NAME("valid"));
+		sc_trace(tf,	base_type::v_sync,		TR_NAME("v_sync"));
+		sc_trace(tf,	base_type::h_sync,		TR_NAME("h_sync"));
+		sc_trace(tf,	base_type::video_en,	TR_NAME("video_en"));
+		sc_trace(tf,	base_type::data,		TR_NAME("data"));
+	}
+
 	template<class C> void bind(C& c){
 		base_type::valid(c.valid);
 		base_type::v_sync(c.v_sync);
@@ -183,5 +200,6 @@ template<class CFG> class video_base_out<CFG,TLM>:public sc_port<VideoInterface<
 public:
 
 };
+
 
 #endif /* VIDEO_IF_H_ */
