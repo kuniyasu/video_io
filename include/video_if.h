@@ -39,6 +39,25 @@ public:
 	video_sig(const char* name=sc_gen_unique_name("video_sig")){}
 };
 
+template<class CFG=VideoConfig,class L=PIN>class SimpleVideoBUS{
+public:
+
+	SimpleVideoBUS(const char* name=sc_gen_unique_name("SimpleVideoBUS")){}
+
+	template<class C> void bind_in(C& c){
+		c.bind(sig);
+	}
+
+	template<class C> void bind_out(C& c){
+		c.bind(sig);
+	}
+
+	video_sig<CFG> sig;
+};
+
+
+
+
 template<class CFG=VideoConfig,class L=PIN> class video_base_in:public VideoInterface<CFG>{
 public:
 	sc_in<bool> valid;
@@ -65,12 +84,12 @@ public:
 
 template<class CFG=VideoConfig,class L=PIN> class video_base_out:public VideoInterface<CFG>{
 public:
-	sc_in<bool> valid;
+	sc_out<bool> valid;
 
-	sc_in<bool> v_sync;
-	sc_in<bool> h_sync;
-	sc_in<bool> video_en;
-	sc_in<typename CFG::video_data_type> data;
+	sc_out<bool> v_sync;
+	sc_out<bool> h_sync;
+	sc_out<bool> video_en;
+	sc_out<typename CFG::video_data_type> data;
 
 	video_base_out(const char* name=sc_gen_unique_name("video_base_out")){}
 
@@ -88,7 +107,8 @@ public:
 };
 
 
-template<class CFG=VideoConfig,class L=PIN> class video_in:public sc_module, public video_base_in<CFG,L>, public VideoInterface<CFG>{
+template<class CFG=VideoConfig,class L=PIN>
+class video_in:public sc_module, public video_base_in<CFG,L>, public VideoInterface<CFG>{
 public:
 	typedef video_base_in<CFG,L> base_type;
 	typedef VideoInterface<CFG> if_type;
@@ -144,7 +164,8 @@ public:
 	}
 };
 
-template<class CFG=VideoConfig,class L=PIN> class video_out:public sc_module, public video_base_out<CFG,L>, public VideoInterface<CFG>{
+template<class CFG=VideoConfig,class L=PIN>
+class video_out:public sc_module, public video_base_out<CFG,L>, public VideoInterface<CFG>{
 public:
 	typedef video_base_out<CFG,L> base_type;
 	typedef VideoInterface<CFG> if_type;
@@ -191,6 +212,30 @@ public:
 	}
 };
 
+template<class CFG>class SimpleVideoBUS<CFG,TLM>:public VideoInterface<CFG>{
+public:
+	SimpleVideoBUS(const char* name=sc_gen_unique_name("SimpleVideoBUS")){}
+
+	template<class C> void bind_in(C& c){
+		c.bind(cb_port);
+	}
+
+	template<class C> void bind_out(C& c){
+		c.bind(*this);
+	}
+
+
+	void reset(){
+		cb_port->reset();
+	}
+
+	void display(bool v, bool h, bool en, typename CFG::video_data_type data){
+		cb_port->display( v, h, en, data);
+	}
+
+	sc_export<VideoInterface<CFG> > cb_port;
+};
+
 template<class CFG> class video_base_in<CFG,TLM>:public sc_export<VideoInterface<CFG> >{
 public:
 
@@ -201,5 +246,30 @@ public:
 
 };
 
+template<class CFG> class video_in<CFG,TLM>:public sc_export<VideoInterface<CFG> >{
+public:
+
+	virtual void reset(){
+		cg_port->reset();
+	}
+
+	virtual void display(bool v, bool h, bool en, typename CFG::video_data_type data){
+		cg_port->display(v,h,en,data);
+	}
+
+	sc_export<VideoInterface<CFG> > cg_port;
+};
+
+template<class CFG> class video_out<CFG,TLM>:public sc_port<VideoInterface<CFG> >{
+public:
+	typedef sc_port<VideoInterface<CFG> > base_type;
+
+	virtual void reset(){
+		//->reset();
+	}
+
+	virtual void display(bool v, bool h, bool en, typename CFG::video_data_type data){
+	}
+};
 
 #endif /* VIDEO_IF_H_ */

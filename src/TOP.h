@@ -10,13 +10,26 @@
 
 #include <systemc.h>
 #include "video_if.h"
+#include "BmpVideoOut.h"
 
 class TOP:public sc_module{
 public:
-	video_in<VideoConfig,PIN> inf;
+	//video_in<VideoConfig,PIN> inf;
+	BMP_Loader bmp_loader;
 
-	TOP(const char* name):sc_module(name){
+	SC_HAS_PROCESS(TOP);
+	TOP(const sc_module_name& name):sc_module(name),bmp_loader(){
+
+		bmp_loader.loadBMPFile("SMPTE_COLOR_BAR.bmp");
+
+		SC_THREAD(thread);
 		end_module();
+	}
+
+
+	void thread(){
+		wait(100,SC_MS);
+		sc_stop();
 	}
 };
 
