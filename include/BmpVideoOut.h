@@ -295,7 +295,12 @@ public:
 	RGBTRIPLE* bc_color_map;
 	RGBQUAD* bi_color_map;
 
-	RGBQUAD** rgbquad;
+	unsigned char* red;
+	unsigned char* green;
+	unsigned char* blue;
+	unsigned char* resarved;
+
+	//RGBQUAD** rgbquad;
 
 	FILE* file;
 	char filename[256];
@@ -319,24 +324,37 @@ public:
 	}
 
 	void createColorMap(){
-		if( infosize==12 && bitmapcoreheader.bcBitCount == 1U ){
-			bc_color_map = new RGBTRIPLE[2];
-		}else if( infosize==12 && bitmapcoreheader.bcBitCount == 4U ){
-			bc_color_map = new RGBTRIPLE[16];
-		}else if( infosize==12 && bitmapcoreheader.bcBitCount == 8U ){
-			bc_color_map = new RGBTRIPLE[256];
-		}else if( infosize==12 && bitmapcoreheader.bcBitCount == 16U ){
-			bc_color_map = new RGBTRIPLE[65536];
-		}
+		int color_size = 0;
 
-		if( infosize==40 && bitmapinfoheader.biBitCount == 1U ){
-			bi_color_map = new RGBQUAD[2];
-		}else if( infosize==40 && bitmapinfoheader.biBitCount == 4U ){
-			bi_color_map = new RGBQUAD[16];
-		}else if( infosize==40 && bitmapinfoheader.biBitCount == 8U ){
-			bi_color_map = new RGBQUAD[256];
-		}else if( infosize==40 && bitmapinfoheader.biBitCount == 16U ){
-			bi_color_map = new RGBQUAD[65536];
+		if( infosize==12 ){
+			color_size = 1<<bitmapcoreheader.bcBitCount;
+
+			if((bitmapcoreheader.bcBitCount != 32)&&(bitmapcoreheader.bcBitCount != 24)){
+				bc_color_map = new RGBTRIPLE[color_size];
+
+				for(int i=0; i<color_size; i++){
+					bc_color_map[i].rgbBlue  = fgetc(file);
+					bc_color_map[i].rgbGreen = fgetc(file);
+					bc_color_map[i].rgbRed 	 = fgetc(file);
+				}
+			}
+		}else if( infosize==40 ){
+			if( bitmapinfoheader.biClrUsed == 0 ){
+				color_size = 1<<bitmapinfoheader.biBitCount;
+			}else{
+				color_size = bitmapinfoheader.biClrUsed;
+			}
+
+			if((bitmapinfoheader.biBitCount != 32)&&(bitmapinfoheader.biBitCount != 24)){
+				bi_color_map = new RGBQUAD[color_size];
+
+				for(int i=0; i<color_size; i++){
+					bi_color_map[i].rgbBlue  = fgetc(file);
+					bi_color_map[i].rgbGreen = fgetc(file);
+					bi_color_map[i].rgbRed 	 = fgetc(file);
+					bi_color_map[i].rgbReserved = fgetc(file);
+				}
+			}
 		}
 	}
 
@@ -353,11 +371,11 @@ public:
 			width  = bitmapinfoheader.biWidth;
 		}
 
-		rgbquad = new RGBQUAD*[height];
-
-		for(short i=0; i<width; i++){
-			rgbquad[i] = new RGBQUAD();
-		}
+//		rgbquad = new RGBQUAD*[height];
+//
+//		for(short i=0; i<width; i++){
+//			rgbquad[i] = new RGBQUAD();
+//		}
 
 	}
 
